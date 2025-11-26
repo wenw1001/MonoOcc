@@ -17,14 +17,14 @@ _num_levels_ = 1
 _labels_tag_ = 'labels'
 _num_cams_ = 1
 _temporal_ = []
-point_cloud_range = [0, -25.6, -2.0, 51.2, 25.6, 4.4]
-voxel_size = [0.2, 0.2, 0.2]
+point_cloud_range = [0, -25.6, -2.0, 51.2, 25.6, 4.4] # 這代表點雲的範圍，單位為米。範圍定義為 [x_min, y_min, z_min, x_max, y_max, z_max]。在這個例子中，點雲的範圍從 x=0 米到 x=51.2 米，y=-25.6 米到 y=25.6 米，z=-2.0 米到 z=4.4 米。這個範圍決定了模型將處理和預測的三維空間區域。
+voxel_size = [0.2, 0.2, 0.2] # 這代表體素大小，單位為m。如果體素大小設置為 [0.2, 0.2, 0.2]，表示每個體素在 x、y、z 三個方向上的尺寸分別為 0.2 米。要更細粒度地表示空間，可以減小體素大小，例如設置為 [0.1, 0.1, 0.1]，這樣每個體素的尺寸將變為 0.1 米。
 
 _sem_scal_loss_ = True
 _geo_scal_loss_ = True
 _depthmodel_= 'msnet3d'
 _nsweep_ = 10
-_query_tag_ = 'query_iou5203_pre7712_rec6153'
+_query_tag_ = 'query'
 
 model = dict(
    type='MonoOcc',

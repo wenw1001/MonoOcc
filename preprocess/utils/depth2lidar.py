@@ -26,6 +26,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_high', type=int, default=80)
     args = parser.parse_args()
 
+    print("args.depth_dir:", args.depth_dir)
+    print("args.calib_dir:", args.calib_dir)
     assert os.path.isdir(args.depth_dir)
     assert os.path.isdir(args.calib_dir)
 

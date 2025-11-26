@@ -16,7 +16,9 @@ wen_data/
 └── wen_kitti/                   # 資料存放區範例
     └── 00/
         ├── calib.txt            # 相機參數
-        ├── image_2/             # 原始影像
+        ├── image_2/             # 原始輸入影像
+        ├── depth_da3/           # [輸出，可選] 原始深度資訊（.npy）和深度圖視覺化 (.png)
+        ├── lidar_da3/           # [輸出，可選] 偽點雲 (.bin)
         └── pseudo_pc/           # [輸出] QPN 用的偽體素 (.npy)
 ```
 
@@ -36,6 +38,19 @@ wen_data/
 請確保在執行前啟動安裝了 `depth_anything_3` 的環境：
 ```bash
 conda activate da3
+```
+若尚未安裝，可參照以下指令安裝：
+```bash
+conda create -n da3 python=3.10
+conda activate da3
+cd MonoOcc
+git clone https://github.com/ByteDance-Seed/Depth-Anything-3.git
+cd Depth-Anything3
+
+# 安裝依賴
+pip install xformers "torch>=2" torchvision
+# 安裝 Depth Anything 3
+pip install -e .
 ```
 
 ### 3. 使用方法
@@ -78,6 +93,29 @@ python wen_data/preprocess/preprocess_one_click.py \
 | `--save-depth` | 否 | [開關] 是否儲存原始深度數值 `.npy` (存於 `depth_da3/`)。 |
 | `--save-depth-vis` | 否 | [開關] 是否儲存彩色深度熱力圖 `.png` (存於 `depth_da3/`)。 |
 | `--save-lidar` | 否 | [開關] 是否儲存偽點雲 `.bin` (可用 Open3D 檢視，存於 `lidar_da3/`)。 |
+
+### 可選用的 DA3 模型列表與規格
+
+`preprocess_one_click.py` 預設使用最強大的 `depth-anything/DA3NESTED-GIANT-LARGE` 模型。您可以透過 `--model-type` 參數切換其他模型，以平衡效能與速度。
+
+| 模型名稱 (參數值) | 參數量 | 功能特性 (Features) | 授權 (License) |
+| :--- | :--- | :--- | :--- |
+| **`depth-anything/DA3NESTED-GIANT-LARGE`** | **1.40B** | **(預設, 最強)** 支援公制深度 (Metric Depth)、相對深度、姿態估計、姿態條件、3DGS、天空分割。 | CC BY-NC 4.0 |
+| `depth-anything/DA3-GIANT` | 1.15B | 支援相對深度、姿態估計、姿態條件、3DGS。 | CC BY-NC 4.0 |
+| `depth-anything/DA3-LARGE` | 0.35B | 支援相對深度、姿態估計、3DGS。 | CC BY-NC 4.0 |
+| `depth-anything/DA3-BASE` | 0.12B | 支援相對深度、姿態估計、3DGS。速度較快。 | Apache 2.0 |
+| `depth-anything/DA3-SMALL` | 0.08B | 支援相對深度、姿態估計、3DGS。最輕量化。 | Apache 2.0 |
+| `depth-anything/DA3METRIC-LARGE` | 0.35B | 專注於 **公制深度 (Metric Depth)** 與天空分割。 | Apache 2.0 |
+| `depth-anything/DA3MONO-LARGE` | 0.35B | 專注於相對深度與天空分割。 | Apache 2.0 |
+
+> **功能圖例說明**：
+> * **公制深度 (Met. Depth)**：輸出真實世界的距離單位（如公尺）。
+> * **相對深度 (Rel. Depth)**：輸出物體間的遠近關係，無絕對單位。
+> * **3DGS (GS)**：支援 3D Gaussian Splatting 渲染。
+
+注意：
+* VRAM 需求：Giant 系列模型 (1B+) 需要較大的顯卡記憶體 (建議 24GB+)。若遇到 OOM (Out of Memory) 錯誤，請嘗試切換至 Large 或 Base 版本。
+* 授權：請留意部分模型 (Giant/Large) 採用 CC BY-NC 4.0 (僅限非商業用途)，而 Base/Small/Metric 則採用 Apache 2.0。
 
 ## 工具 2：`wen_test_DA3.py` (測試用)
 

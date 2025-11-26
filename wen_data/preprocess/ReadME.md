@@ -100,13 +100,13 @@ python wen_data/preprocess/preprocess_one_click.py \
 
 | 模型名稱 (參數值) | 參數量 | 功能特性 (Features) | 授權 (License) |
 | :--- | :--- | :--- | :--- |
-| **`depth-anything/DA3NESTED-GIANT-LARGE`** | **1.40B** | **(預設, 最強)** 支援公制深度 (Metric Depth)、相對深度、姿態估計、姿態條件、3DGS、天空分割。 | CC BY-NC 4.0 |
-| `depth-anything/DA3-GIANT` | 1.15B | 支援相對深度、姿態估計、姿態條件、3DGS。 | CC BY-NC 4.0 |
-| `depth-anything/DA3-LARGE` | 0.35B | 支援相對深度、姿態估計、3DGS。 | CC BY-NC 4.0 |
-| `depth-anything/DA3-BASE` | 0.12B | 支援相對深度、姿態估計、3DGS。速度較快。 | Apache 2.0 |
-| `depth-anything/DA3-SMALL` | 0.08B | 支援相對深度、姿態估計、3DGS。最輕量化。 | Apache 2.0 |
-| `depth-anything/DA3METRIC-LARGE` | 0.35B | 專注於 **公制深度 (Metric Depth)** 與天空分割。 | Apache 2.0 |
-| `depth-anything/DA3MONO-LARGE` | 0.35B | 專注於相對深度與天空分割。 | Apache 2.0 |
+| **[depth-anything/DA3NESTED-GIANT-LARGE](https://huggingface.co/depth-anything/DA3NESTED-GIANT-LARGE)** | **1.40B** | **(預設, 最強)** 支援公制深度 (Metric Depth)、相對深度、姿態估計、姿態條件、3DGS、天空分割。 | CC BY-NC 4.0 |
+| [depth-anything/DA3-GIANT](https://huggingface.co/depth-anything/DA3-GIANT) | 1.15B | 支援相對深度、姿態估計、姿態條件、3DGS。 | CC BY-NC 4.0 |
+| [depth-anything/DA3-LARGE](https://huggingface.co/depth-anything/DA3-LARGE) | 0.35B | 支援相對深度、姿態估計、3DGS。 | CC BY-NC 4.0 |
+| [depth-anything/DA3-BASE](https://huggingface.co/depth-anything/DA3-BASE) | 0.12B | 支援相對深度、姿態估計、3DGS。速度較快。 | Apache 2.0 |
+| [depth-anything/DA3-SMALL](https://huggingface.co/depth-anything/DA3-SMALL) | 0.08B | 支援相對深度、姿態估計、3DGS。最輕量化。 | Apache 2.0 |
+| [depth-anything/DA3METRIC-LARGE](https://huggingface.co/depth-anything/DA3METRIC-LARGE) | 0.35B | 專注於 **公制深度 (Metric Depth)** 與天空分割。 | Apache 2.0 |
+| [depth-anything/DA3MONO-LARGE](https://huggingface.co/depth-anything/DA3MONO-LARGE) | 0.35B | 專注於相對深度與天空分割。 | Apache 2.0 |
 
 > **功能圖例說明**：
 > * **公制深度 (Met. Depth)**：輸出真實世界的距離單位（如公尺）。

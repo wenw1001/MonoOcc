@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+*.so
+*.o
+*.npy
+result/
+results.pkl
+ckpts/
+.dist_test/
+deform_attn_3d/
+kitti/
+preprocess/data_odometry_calib/
+preprocess/kitti/
+preprocess/mapping/build/
+preprocess/mobilestereonet/
+wen_data/
+tools/test copy.py

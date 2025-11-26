@@ -13,5 +13,5 @@ preprocess/data_odometry_calib/
 preprocess/kitti/
 preprocess/mapping/build/
 preprocess/mobilestereonet/
-wen_data/
+wen_data/wen_kitti
 tools/test copy.py

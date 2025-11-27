@@ -53,7 +53,6 @@ def parse_args():
     group.add_argument('--image-dir', type=str, help='Path to a directory containing images')
     
     parser.add_argument('--calib-path', type=str, required=True, help='Path to KITTI calib.txt')
-    # 修改說明：save-dir 現在是用於指定"根"輸出目錄，或者你可以不指定讓它自動產生
     parser.add_argument('--save-dir', type=str, help='Custom output directory. If not set, defaults to sibling directories (pseudo_pc / pseudo_packed)')
     
     parser.add_argument('--model-type', type=str, default='depth-anything/DA3NESTED-GIANT-LARGE', help='DA3 Model ID')
@@ -90,10 +89,15 @@ def step1_predict_depth(model, image_path):
     original_img = cv2.imread(image_path)
     orig_h, orig_w = original_img.shape[:2]
     
+    # 2. 推論 (模型會自動 resize 輸入去做計算)
     pred = model.inference([image_path])
-    depth_map = pred.depth[0]
+    depth_map = pred.depth[0] # 這時候可能是縮小後的尺寸，例如 (154, 504)
     
     if depth_map.shape[0] != orig_h or depth_map.shape[1] != orig_w:
+        # print(f"  [Resize] Restoring depth from {depth_map.shape} to {(orig_h, orig_w)}...")
+        
+        # 使用 cv2.resize 還原尺寸
+        # 注意：cv2.resize 接受的尺寸參數是 (Width, Height)
         depth_map = cv2.resize(depth_map, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
         
     return depth_map
@@ -106,37 +110,54 @@ def save_depth_vis(depth_map, save_path):
     cv2.imwrite(save_path, depth_vis)
 
 def step2_depth_to_pointcloud(depth_map, K, max_depth=80.0):
+    """Step 2: Depth -> Point Cloud"""
     rows, cols = depth_map.shape
     c, r = np.meshgrid(np.arange(cols), np.arange(rows))
+    
     mask = (depth_map > 0) & (depth_map < max_depth)
     depth = depth_map[mask]
     u = c[mask]
     v = r[mask]
+    
     cx, cy, fx, fy = K[0, 2], K[1, 2], K[0, 0], K[1, 1]
+    
     x_c = (u - cx) * depth / fx
     y_c = (v - cy) * depth / fy
     z_c = depth
+    
+    # Camera (Z-forward) -> LiDAR (X-forward, Z-up)
     x_l = z_c
     y_l = -x_c
     z_l = -y_c
+    
     return np.stack([x_l, y_l, z_l], axis=-1)
 
 def step3_pointcloud_to_voxel(points, pc_range, voxel_size, grid_size):
+    """Step 3: Point Cloud -> Voxel Grid"""
     keep = (points[:, 0] >= pc_range[0]) & (points[:, 0] < pc_range[3]) & \
            (points[:, 1] >= pc_range[1]) & (points[:, 1] < pc_range[4]) & \
            (points[:, 2] >= pc_range[2]) & (points[:, 2] < pc_range[5])
     points = points[keep]
-    if points.shape[0] == 0: return np.zeros(tuple(grid_size), dtype=np.float32)
+    
+    if points.shape[0] == 0:
+        return np.zeros(tuple(grid_size), dtype=np.float32)
+
     coords = (points - pc_range[:3]) / voxel_size
     coords = np.floor(coords).astype(np.int32)
     unique_coords = np.unique(coords, axis=0)
+    
     voxel_grid = np.zeros(tuple(grid_size), dtype=np.float32)
     x, y, z = unique_coords[:, 0], unique_coords[:, 1], unique_coords[:, 2]
-    valid_mask = (x >= 0) & (x < grid_size[0]) & (y >= 0) & (y < grid_size[1]) & (z >= 0) & (z < grid_size[2])
+    
+    valid_mask = (x >= 0) & (x < grid_size[0]) & \
+                 (y >= 0) & (y < grid_size[1]) & \
+                 (z >= 0) & (z < grid_size[2])
+    
     voxel_grid[x[valid_mask], y[valid_mask], z[valid_mask]] = 1.0
     return voxel_grid
 
 def process_single_image(model, img_path, K, args, directories):
+    """處理單張圖片並根據參數儲存結果"""
     try:
         filename = os.path.basename(img_path)
         base_name = os.path.splitext(filename)[0]
@@ -144,17 +165,20 @@ def process_single_image(model, img_path, K, args, directories):
         # 1. Image -> Depth
         depth_map = step1_predict_depth(model, img_path)
         
-        # Save Depth
+        # (Option) 儲存深度 .npy
         if args.save_depth:
             np.save(os.path.join(directories['depth'], base_name + '.npy'), depth_map)
+            
+        # (Option) 儲存深度視覺化 .png
         if args.save_depth_vis:
             save_depth_vis(depth_map, os.path.join(directories['depth'], base_name + '.png'))
 
         # 2. Depth -> LiDAR
         points = step2_depth_to_pointcloud(depth_map, K, args.max_depth)
         
-        # Save LiDAR
+        # (Option) 儲存點雲 .bin (KITTI format)
         if args.save_lidar:
+            # KITTI .bin 需要 intensity，補上 0
             points_with_intensity = np.hstack((points, np.zeros((points.shape[0], 1))))
             points_with_intensity.astype(np.float32).tofile(os.path.join(directories['lidar'], base_name + '.bin'))
 
@@ -179,6 +203,7 @@ def process_single_image(model, img_path, K, args, directories):
 
 def main():
     args = parse_args()
+    
     K = read_calib_file(args.calib_path)
     
     print(f"正在載入模型: {args.model_type} ...")
@@ -228,6 +253,7 @@ def main():
         print(f"Voxel 輸出 (原始 .npy):   {directories['voxel']}")
 
     iterator = tqdm(image_files, desc="Processing") if 'tqdm' in sys.modules else image_files
+    
     for img_path in iterator:
         process_single_image(model, img_path, K, args, directories)
         

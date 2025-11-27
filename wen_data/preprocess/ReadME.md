@@ -19,7 +19,8 @@ wen_data/
         ├── image_2/             # 原始輸入影像
         ├── depth_da3/           # [輸出，可選] 原始深度資訊（.npy）和深度圖視覺化 (.png)
         ├── lidar_da3/           # [輸出，可選] 偽點雲 (.bin)
-        └── pseudo_pc/           # [輸出] QPN 用的偽體素 (.npy)
+        ├── pseudo_pc/           # [標準輸出] .npy 格式 (8.4MB/檔)
+        └── pseudo_packed/       # [壓縮輸出] .pseudo 格式 (262KB/檔)，QPN 用的偽體素預設為此
 ```
 
 ## 工具 1：`preprocess_one_click.py` (主程式)
@@ -31,6 +32,8 @@ wen_data/
 * **深度估計**：使用 DA3 推論高精度深度圖（並自動還原回原始解析度）。
 * **點雲轉換**：利用相機內參將深度反向投影生成 3D 偽點雲。
 * **體素化**：將點雲轉換為 QPN 模型所需的偽體素 (`pseudo_pc`) 格式。
+* **空間節省**：支援 `.pseudo` 位元壓縮格式，大幅減少儲存空間 (32x 壓縮率)。
+* **自動分流**：自動將 `.npy` 與 `.pseudo` 存放在不同資料夾，避免混淆。
 * **批次處理**：支援處理整個資料夾的影像。
 * **除錯功能**：可選擇性儲存中間產物（彩色深度圖、.bin 點雲檔）。
 
@@ -57,24 +60,35 @@ pip install -e .
 
 請在 `MonoOcc` 專案根目錄下執行。
 
-#### 基本用法（僅生成必要檔案）
-這是最常用的模式，只會生成後續推論必要的 `.npy` 檔案。
+#### 模式 A：標準輸出 (推薦用於除錯/小量資料)
+產生標準的 `.npy` (Float32) 檔案，檔案較大 (~8.4MB)，但讀取方便。檔案將存於 `pseudo_pc/` 目錄。
 
 ```bash
 python wen_data/preprocess/preprocess_one_click.py \
     --image-dir wen_data/wen_kitti/00/image_2 \
     --calib-path wen_data/wen_kitti/00/calib.txt \
-    --save-dir wen_data/wen_kitti/00/pseudo_pc
+    --save-dir wen_data/wen_kitti/00
 ```
 
-#### 進階用法（儲存所有中間過程與視覺化）
+#### 模式 B：壓縮輸出 (推薦用於大量資料)
+加入 `--compress` 參數。產生位元壓縮的 `.pseudo` (uint8) 檔案，檔案極小 (~262KB)。檔案將自動存於 `pseudo_packed/` 目錄。
+
+```bash
+python wen_data/preprocess/preprocess_one_click.py \
+    --image-dir wen_data/wen_kitti/00/image_2 \
+    --calib-path wen_data/wen_kitti/00/calib.txt \
+    --save-dir wen_data/wen_kitti/00 \
+    --compress
+```
+
+#### 進階用法（儲存所有中間過程）
 如果你想檢查深度估計是否準確，或想用 Open3D 查看產生的點雲，請加上儲存參數。
 
 ```bash
 python wen_data/preprocess/preprocess_one_click.py \
     --image-dir wen_data/wen_kitti/00/image_2 \
     --calib-path wen_data/wen_kitti/00/calib.txt \
-    --save-dir wen_data/wen_kitti/00/pseudo_pc \
+    --save-dir wen_data/wen_kitti/00 \
     --save-depth \
     --save-depth-vis \
     --save-lidar
@@ -87,14 +101,26 @@ python wen_data/preprocess/preprocess_one_click.py \
 | `--image-dir` | 是* | 輸入影像的資料夾路徑。(*與 `--image-path` 擇一) |
 | `--image-path` | 是* | 單張輸入影像的路徑。(*與 `--image-dir` 擇一) |
 | `--calib-path` | **是** | KITTI 格式的 `calib.txt` 路徑 (用於讀取 P2 矩陣)。 |
-| `--save-dir` | 否 | 偽體素 `.npy` 的輸出目錄。若不指定，預設為圖片目錄旁的 `pseudo_pc`。 |
+| `--save-dir` | 否 | 偽體素 `.npy`/`.pseudo` 輸出的**根目錄**。腳本會在其下自動建立 `pseudo_pc` 或 `pseudo_packed` 子資料夾。 若不指定，預設為與圖片目錄同一層。 |
+| `--compress` | **否** | 若啟用，將輸出壓縮的 `.pseudo` 格式並存入 `pseudo_packed/`。若未啟用，則輸出 `.npy` 至 `pseudo_pc/`。 |
 | `--model-type` | 否 | DA3 模型版本 (預設: `depth-anything/DA3NESTED-GIANT-LARGE`)。 |
 | `--max-depth` | 否 | 最大深度截斷距離 (預設: `80.0` 公尺)。 |
 | `--save-depth` | 否 | [開關] 是否儲存原始深度數值 `.npy` (存於 `depth_da3/`)。 |
 | `--save-depth-vis` | 否 | [開關] 是否儲存彩色深度熱力圖 `.png` (存於 `depth_da3/`)。 |
 | `--save-lidar` | 否 | [開關] 是否儲存偽點雲 `.bin` (可用 Open3D 檢視，存於 `lidar_da3/`)。 |
 
-### 可選用的 DA3 模型列表與規格
+> 補充說明：關於 `--max-depth` 參數
+> **`--max-depth` (預設值: 80.0 公尺)** 是一個關鍵的過濾參數，用於決定從 2D 深度圖轉換為 3D 點雲時的**最遠有效距離**。
+> **為什麼需要設定這個限制？**
+> 1.  **去除「天空」與「無限遠」雜訊**：
+    Depth Anything 3 (DA3) 的推論能力非常強，甚至能估計出天空、極遠處建築物或背景的深度（可能達數百公尺）。在轉換為 3D 偽點雲時，這些極遠的點會形成無意義的背景雜訊，干擾模型對車輛周遭場景的判斷。
+> 2.  **對齊 KITTI/LiDAR 規格**：
+    KITTI 資料集所使用的 LiDAR 感測器有效偵測範圍約為 **80 公尺**。為了讓生成的偽點雲 (Pseudo LiDAR) 的分佈特性與真實 LiDAR 數據（Ground Truth）保持一致，通常會截斷超過此距離的點。
+> 3.  **優化體素化 (Voxelization) 效果**：
+    MonoOcc 模型的關注範圍（Voxel Grid）通常集中在車前 **51.2 公尺** 以內。保留過遠的點（如 150m 外的點）不僅對語意佔用預測沒有幫助，還會增加檔案大小並可能影響座標轉換的正規化過程。
+> **建議**：一般情況下請保持預設值 `80.0`。除非您的應用場景需要偵測極遠處的物體，否則不建議調大此數值。
+
+### 5. 可選用的 DA3 模型列表與規格
 
 `preprocess_one_click.py` 預設使用最強大的 `depth-anything/DA3NESTED-GIANT-LARGE` 模型。您可以透過 `--model-type` 參數切換其他模型，以平衡效能與速度。
 
@@ -149,6 +175,11 @@ python wen_data/preprocess/preprocess_one_click.py \
 
 ---
 ## 常見問題 (FAQ)
+
+* **Q: `.npy` 和 `.pseudo` 檔案有什麼不同？**
+    * **A:**
+        * `.npy` 是 Float32 格式，未壓縮，檔案約 8.4MB。讀取方便 (`np.load`)。
+        * `.pseudo` 是將 8 個體素狀態 (0/1) 壓縮進 1 個 Byte (uint8)，檔案約 262KB。讀取時需要位元解壓 (Unpack)。幾何資訊兩者完全相同。
 
 * **Q: 執行時出現 `[WARN] Dependency gsplat is required...` 警告？**
     * **A:** 請忽略。這是 3D Gaussian Splatting 的依賴套件，我們只使用深度估計功能，不需要它。

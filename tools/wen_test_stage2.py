@@ -17,9 +17,9 @@
 使用方法，打開終端機輸入以下指令：
 cd ./MonoOcc
 python ./tools/wen_test_stage2.py \
---config ./projects/configs/MonoOcc/MonoOcc-S.py \
---checkpoint /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth \
---data ./wen_data/wen_kitti/00
+    ./projects/configs/MonoOcc/MonoOcc-S.py \
+    /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth \
+    ./wen_data/wen_kitti/00
 
 """
 

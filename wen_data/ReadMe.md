@@ -21,7 +21,8 @@
 
 -----
 ## Stage 0 前處理
-####　啟動環境
+
+#### 啟動環境
 ```bash
 cd Desktop/wenwen/my_projects/MonoOcc/
 
@@ -42,7 +43,8 @@ python /home/rvl/Desktop/wenwen/my_projects/MonoOcc/wen_data/preprocess/preproce
 
 ---
 ## Stage 1 QPN
-####　啟動環境
+
+#### 啟動環境
 ```bash
 conda deactivate
 conda activate MonoOcc_clean
@@ -59,6 +61,7 @@ python ./tools/wen_test_stage1.py \
 
 ---
 ## Stage 2 MonoOcc
+
 #### 執行編號00的資料夾
 ```bash
 # cd ./MonoOcc

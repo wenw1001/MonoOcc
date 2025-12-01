@@ -1,3 +1,0 @@
-/home/aidrive/zyp/Surround_scene/fisherocc/preprocess/mapping/CMakeFiles/rebuild_cache.dir
-/home/aidrive/zyp/Surround_scene/fisherocc/preprocess/mapping/CMakeFiles/edit_cache.dir
-/home/aidrive/zyp/Surround_scene/fisherocc/preprocess/mapping/CMakeFiles/mapping.dir

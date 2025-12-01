@@ -1,9 +1,24 @@
 # 快速開始
-```bash
-```
 
-```python
-```
+單張影像的完整推論流程：
+如果要將一張全新的、沒看過的影像丟入模型得出結果，你需要建立一個完整的自動化管線 (Pipeline)，依序執行以下步驟：
+1. Stage 0: 前處理 (深度估計)
+- 輸入：單張 RGB 影像 (image.png)
+- 執行：執行深度估計模型 (如 MobileStereoNet3D 或 DA3)。
+- 產出：深度圖 -> 偽點雲 -> 偽體素 (Pseudo Voxel .npy)。
+
+2. Stage 1: 提案生成 (QPN 推論)
+- 輸入：上一步產生的 偽體素 (.npy)。
+- 執行：QPN 模型 (qpn.pth)。
+- 產出：稀疏提案 (.query 或 .npy)。
+
+3. Stage 2: 語意補全 (MonoOcc 推論)
+- 輸入：原始 RGB 影像 (image.png) + 上一步產生的 稀疏提案 (.query)。
+- 執行：MonoOcc 模型 (MonoOcc-S.pth)。
+- 產出：最終 3D 語意地圖 (.pkl 或 ssc_logit)。
+
+以下是三階段指令，須先準備好 `影像資料夾` 以及 `calib.txt`
+
 -----
 ## Stage 0 前處理
 ####　啟動環境

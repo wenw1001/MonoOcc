@@ -404,18 +404,22 @@ class LMSCNet_SS(MVXTwoStageDetector):
 
         #save query proposal 
         img_path = img_metas[0]['img_filename'] 
-        frame_id = os.path.splitext(img_path[0])[0][-6:]
+        img_filepath = os.path.dirname(img_path[0])
+        base_out_dir = os.path.dirname(img_filepath)
+        print(f"影像路徑: {img_filepath}")
+        print(f"query 儲存路徑根目錄: {base_out_dir}")
+        frame_id = os.path.splitext(img_path[0])[0][-6:] # 預設影像檔名格式為 000001.png，故取最後六個字元當作 frame_id
 
         # msnet3d
-        # query_2_root = os.path.join("./kitti/dataset/sequences_msnet3d_sweep10", img_metas[0]['sequence_id'], 'queries_2')
-        # if not os.path.exists(query_2_root):
-        #     os.makedirs(query_2_root)
+        query_2_root = os.path.join(base_out_dir, 'queries_2')
+        if not os.path.exists(query_2_root):
+            os.makedirs(query_2_root)
 
-        query_4_root = os.path.join("./kitti/dataset/sequences_msnet3d_sweep10", img_metas[0]['sequence_id'], 'queries_4')
+        query_4_root = os.path.join(base_out_dir, 'queries_4')
         if not os.path.exists(query_4_root):
             os.makedirs(query_4_root)
 
-        query_8_root = os.path.join("./kitti/dataset/sequences_msnet3d_sweep10", img_metas[0]['sequence_id'], 'queries_8')
+        query_8_root = os.path.join(base_out_dir, 'queries_8')
         if not os.path.exists(query_8_root):
             os.makedirs(query_8_root)
        
@@ -442,15 +446,20 @@ class LMSCNet_SS(MVXTwoStageDetector):
           #   np.save(pred_sigma_path, pred_sigma)
           
         # else:
-        save_query_path_4 = os.path.join(query_4_root, frame_id + ".query_iou5203_pre7712_rec6153")
+        save_query_path_2 = os.path.join(query_2_root, frame_id + ".query")
+        y_pred_bin_2 = self.pack(y_pred_1)
+        print(save_query_path_2, y_pred_bin_2.shape)
+        y_pred_bin_2.tofile(save_query_path_2)
+
+        save_query_path_4 = os.path.join(query_4_root, frame_id + ".query")
         y_pred_bin_4 = self.pack(y_pred_2)
         print(save_query_path_4, y_pred_bin_4.shape)
-        # y_pred_bin_4.tofile(save_query_path_4)
+        y_pred_bin_4.tofile(save_query_path_4)
         
-        save_query_path_8 = os.path.join(query_8_root, frame_id + ".query_iou5203_pre7712_rec6153")
+        save_query_path_8 = os.path.join(query_8_root, frame_id + ".query")
         y_pred_bin_8 = self.pack(y_pred_3)
         print(save_query_path_8, y_pred_bin_8.shape)
-        # y_pred_bin_8.tofile(save_query_path_8)
+        y_pred_bin_8.tofile(save_query_path_8)
         #-------------------------------------------------------------------------------------------------
         # print(img_metas[0]['sequence_id'])
         # print(img_metas[0]["img_filename"])
@@ -459,6 +468,121 @@ class LMSCNet_SS(MVXTwoStageDetector):
         result['y_pred'] = y_pred_2
         result['y_true'] = y_true
         return result
+    
+    # def foward_test(self,
+    #                     img_metas=None,
+    #                     sequence_id=None,
+    #                     img=None,
+    #                     target=None,
+    #                     T_velo_2_cam=None,
+    #                     cam_k=None, **kwargs):
+
+    #     # 07/12/2022, Yiming Li, only support batch_size = 1
+
+    #     # --- 關鍵修正：檢查 target 是否存在 ---
+    #     is_validation_mode = target is not None
+        
+    #     # 我們不能依賴 target.device (因為 target 可能
+    #     # 是 None)。我們改用 img.device，它一定存在。
+    #     device = img.device
+    #     # --- 修正結束 ---
+
+
+    #     len_queue = img.size(1)
+    #     img_metas = [each[len_queue-1] for each in img_metas] # [dict(), dict(), ...] 
+    #     if self.dataset == 'KITTI':
+    #       depth =  torch.from_numpy(img_metas[0]["pseudo_pc"]).reshape(256, 256, 32).unsqueeze(0) # [1, 256, 256, 32] 
+    #     else:
+    #       depth =  torch.from_numpy(img_metas[0]["pseudo_pc"]).reshape(200, 200, 16).unsqueeze(0) # [1, 256, 256, 32]
+    #     # --- 關鍵修正：使用 img.device ---
+    #     if self.uncertain:
+    #       ssc_pred_1, ssc_pred_2, ssc_pred_3 = self.step(depth.permute(0, 3, 1, 2).to(device))
+    #     else:
+    #       ssc_pred_1, ssc_pred_2, ssc_pred_3 = self.step(depth.permute(0, 3, 1, 2).to(device))
+    #     # --- 修正結束 ---
+
+
+    #     # --- 關鍵修正：分支邏輯 ---
+    #     if is_validation_mode:
+    #         # --- 這是「驗證模式」---
+    #         # (你原本的程式碼，完全保留)
+            
+    #         # for binary classification
+    #         target = target[1]
+    #         ones = torch.ones_like(target).to(target.device)
+    #         target = torch.where(torch.logical_or(target==255, target==0), target, ones) # [1, 128, 128, 16]
+
+    #         y_pred_1 = ssc_pred_1.detach().cpu().numpy() # [1, 20, 128, 128, 16]
+    #         y_pred_2 = ssc_pred_2.detach().cpu().numpy()
+    #         y_pred_3 = ssc_pred_3.detach().cpu().numpy()
+    #         if self.uncertain:
+    #           pred_sigma = y_pred[:,2,:,:,:]
+    #           y_pred = y_pred[:,0:2,:,:,:]
+    #           print(pred_sigma.nonzero()[0].shape[0])
+    #         y_pred_1 = np.argmax(y_pred_1, axis=1).astype(np.uint8) # [1, 128, 128, 16]
+    #         y_pred_2 = np.argmax(y_pred_2, axis=1).astype(np.uint8) # [1, 128, 128, 16]
+    #         y_pred_3 = np.argmax(y_pred_3, axis=1).astype(np.uint8) # [1, 128, 128, 16]
+
+    #         #save query proposal 
+    #         img_path = img_metas[0]['img_filename'] 
+    #         frame_id = os.path.splitext(img_path[0])[0][-6:]
+
+    #         query_4_root = os.path.join("./kitti/dataset/sequences_msnet3d_sweep10", img_metas[0]['sequence_id'], 'queries_4')
+    #         if not os.path.exists(query_4_root):
+    #             os.makedirs(query_4_root)
+
+    #         query_8_root = os.path.join("./kitti/dataset/sequences_msnet3d_sweep10", img_metas[0]['sequence_id'], 'queries_8')
+    #         if not os.path.exists(query_8_root):
+    #             os.makedirs(query_8_root)
+       
+    #         # save_query_path = os.path.join("./kitti/dataset/sequences_msnet3d_sweep10", img_metas[0]['sequence_id'], 'queries', frame_id + ".query_iou5203_pre7712_rec6153")
+    #         # save !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #         # if self.dataset == "nuscenes":
+    #         #   token = img_metas[0]["img_filename"][0].split("/")[-1].replace(".png", ".npy")
+    #         #   if self.uncertain:
+    #         #     save_query_path = os.path.join("./nuscenes/trainval/dataset/midas-uncertain", img_metas[0]['sequence_id'], token)
+    #         #     pred_sigma_path = save_query_path.replace(".npy", "_sigma.npy")
+    #         #   else:
+    #         #     save_query_path = os.path.join("./nuscenes/trainval/dataset/midas-sweep0", img_metas[0]['sequence_id'], token)
+    #         #     save_query_path_1 = save_query_path.replace(".npy", "_1.npy")
+    #         #     save_query_path_2 = save_query_path.replace(".npy", "_2.npy")
+    #         #     save_query_path_3 = save_query_path.replace(".npy", "_3.npy")
+    #         #   save_dir = os.path.dirname(save_query_path)
+    #         #   print(save_dir)
+    #         #   os.makedirs(save_dir, exist_ok=True)
+    #           # np.save(save_query_path_1, y_pred_1)
+    #           # np.save(save_query_path_2, y_pred_2)
+    #           # np.save(save_query_path_3, y_pred_3)
+    #           # print(y_pred_1.shape, y_pred_2.shape, y_pred_3.shape)
+    #           # if self.uncertain:
+    #           #   np.save(pred_sigma_path, pred_sigma)
+              
+    #         # else:
+    #         save_query_path_4 = os.path.join(query_4_root, frame_id + ".query_iou5203_pre7712_rec6153")
+    #         y_pred_bin_4 = self.pack(y_pred_2)
+    #         print(save_query_path_4, y_pred_bin_4.shape)
+    #         y_pred_bin_4.tofile(save_query_path_4)
+            
+    #         save_query_path_8 = os.path.join(query_8_root, frame_id + ".query_iou5203_pre7712_rec6153")
+    #         y_pred_bin_8 = self.pack(y_pred_3)
+    #         print(save_query_path_8, y_pred_bin_8.shape)
+    #         y_pred_bin_8.tofile(save_query_path_8)
+
+    #         result = dict()
+    #         y_true = target.cpu().numpy()
+    #         result['y_pred'] = y_pred_2
+    #         result['y_true'] = y_true
+    #         return result
+
+    #     else:
+    #         # --- 這是「推論模式」 (target is None) ---
+    #         # (這是我們在 `two_stage_inference.py` 中需要的)
+    #         # 我們只回傳模型預測的 logits
+    #         result = dict()
+    #         result['ssc_logit'] = ssc_pred_1   # 1:2 尺度 (128, 128, 16)
+    #         result['ssc_logit_1_4'] = ssc_pred_2 # 1:4 尺度
+    #         result['ssc_logit_1_8'] = ssc_pred_3 # 1:8 尺度
+    #         return result
 
 class UpConv3D(nn.Module):
     """

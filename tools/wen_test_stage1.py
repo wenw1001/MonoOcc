@@ -1,4 +1,6 @@
 """
+主要程式1：wen_test_stage1.py
+說明：
 此為將MonoOcc給的程式自行簡化後的test.py，設計用於單卡測試 (1 GPU)、強制使用分散式環境、沒有驗證 (eval) 階段
 需要修改的部份為Config 路徑、Checkpoint 路徑、欲推論影像檔路徑
 
@@ -16,9 +18,9 @@
 
 使用方法，打開終端機輸入以下指令：
 cd ./MonoOcc
-python ./tools/wen_test_stage2.py \
-    ./projects/configs/MonoOcc/MonoOcc-S.py \
-    /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth \
+python ./tools/wen_test_stage1.py \
+    ./projects/configs/MonoOcc/qpn.py \
+    /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/qpn_mIoU_6140_epoch_12.pth \
     ./wen_data/wen_kitti/00
 
 """
@@ -42,7 +44,7 @@ from mmdet.apis import set_random_seed
 from torch.utils.data import DataLoader
 
 # 自定義模組 import
-from projects.mmdet3d_plugin.datasets.wen_self_kitti_dataset2 import SelfKittiDatasetStage2
+from projects.mmdet3d_plugin.datasets.wen_self_kitti_dataset1 import SelfKittiDatasetStage1
 from projects.mmdet3d_plugin.datasets.samplers.sampler import build_sampler
 from projects.mmdet3d_plugin.MonoOcc.apis.test import custom_multi_gpu_test
 from mmdet.datasets import replace_ImageToTensor
@@ -50,10 +52,10 @@ from mmdet.datasets import replace_ImageToTensor
 def parse_args():
     parser = argparse.ArgumentParser(description='MMDet test (and eval) a model')
     # 你的 Config 路徑
-    default_config = './projects/configs/MonoOcc/MonoOcc-S.py'
+    default_config = './projects/configs/MonoOcc/qpn.py'
     # 你的 Checkpoint 路徑
-    default_ckpt = '/home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth'
-    default_data_root = './wen_data/wen_kitti/07'
+    default_ckpt = '/home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/qpn_mIoU_6140_epoch_12.pth'
+    default_data_root = './wen_data/wen_kitti/00'
 
     # nargs='?' 代表如果指令沒給這個參數，就使用 default 值
     parser.add_argument('config', nargs='?', default=default_config, help='test config file path')
@@ -140,13 +142,7 @@ def main():
     # 3. 建立 Dataset (直接使用指定的 Class)
     print('-----------------')
     print("3. 從 SimpleKittiDataset 建立資料集物件...")
-    dataset = SelfKittiDatasetStage2(
-        data_root=args.data,
-        semantickitti_yaml="/home/rvl/Desktop/wenwen/kitti/dataset/semantic-kitti.yaml",
-        labels_filename="labels",
-        query_filename="queries_2",
-        query_tag="query"
-    )
+    dataset = SelfKittiDatasetStage1(data_root=args.data, split='test', voxel_filename='pseudo_packed_scale105_Tr')
     print("dataset 物件建立完成，包含 %d 筆資料。" % len(dataset))
     time.sleep(1)  # for better print output
 

@@ -36,7 +36,7 @@ class SelfKittiDatasetStage2(Dataset):
         semantickitti_yaml,
         temporal = [],
         eval_range = 51.2,
-        depthmodel="msnet3d",
+        depthmodel="depthanything3",
         labels_filename = 'labels',
         query_filename = "queries_2",
         query_tag = 'query',
@@ -46,6 +46,7 @@ class SelfKittiDatasetStage2(Dataset):
     ):
         super().__init__()
         print(f"(wen_self_kitti_dataset2.py) 初始化 SemanticKittiDatasetStage2，資料根目錄: {data_root}")
+        self.dataset_type = 'SelfKittiDatasetStage2'
         self.data_root = data_root
         self.label_root = os.path.join(data_root, labels_filename)
         self.query_root = os.path.join(data_root, query_filename)

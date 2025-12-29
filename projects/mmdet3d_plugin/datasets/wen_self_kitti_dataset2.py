@@ -37,8 +37,10 @@ class SelfKittiDatasetStage2(Dataset):
         temporal = [],
         eval_range = 51.2,
         depthmodel="depthanything3",
+        image_filename = 'image_2',
         labels_filename = 'labels',
         query_filename = "queries_2",
+        image_tag = 'png',
         query_tag = 'query',
         split = "test",
         color_jitter=None,
@@ -48,8 +50,10 @@ class SelfKittiDatasetStage2(Dataset):
         print(f"(wen_self_kitti_dataset2.py) 初始化 SemanticKittiDatasetStage2，資料根目錄: {data_root}")
         self.dataset_type = 'SelfKittiDatasetStage2'
         self.data_root = data_root
+        self.image_root = os.path.join(data_root, image_filename)
         self.label_root = os.path.join(data_root, labels_filename)
         self.query_root = os.path.join(data_root, query_filename)
+        self.image_tag = image_tag
         self.query_tag = query_tag
         # self.nsweep=str(nsweep)
         self.depthmodel = depthmodel
@@ -269,6 +273,7 @@ class SelfKittiDatasetStage2(Dataset):
         # sequence = scan["sequence"]
         filename = os.path.basename(proposal_path)
         frame_id = os.path.splitext(filename)[0]
+        # print(f"處理影像檔案: {filename}, frame_id: {frame_id}")
 
         meta_dict = self.get_meta_info(scan, frame_id, proposal_path)
         img, bev_feat, openset_feat, sem, lidar, (w, h) = self.get_input_info(frame_id)
@@ -310,7 +315,7 @@ class SelfKittiDatasetStage2(Dataset):
                 preprocessing pipelines.
         """
         rgb_path = os.path.join(
-            self.data_root, "image_2", frame_id + ".png"
+            self.image_root, frame_id + f".{self.image_tag}"
         )
 
         # for multiple images
@@ -344,7 +349,7 @@ class SelfKittiDatasetStage2(Dataset):
             if len(self.target_frames) == 1:
                 # print("因為 target_frames 數量為 1 ， 代表單幀模式但採用左右視角影像，影像取用 image_3 資料夾裡的影像（同幀的右視角）")
                 rgb_path = os.path.join(
-                    self.data_root, "image_3", frame_id + ".png"
+                    self.data_root, "image_3", frame_id + f".{self.image_tag}"
                 )
                 P3 = scan["P3"]
                 cam_k = P3[0:3, 0:3]
@@ -369,7 +374,7 @@ class SelfKittiDatasetStage2(Dataset):
                     target_id = str(id + i).zfill(6)
 
                 rgb_path = os.path.join(
-                    self.data_root, "image_2", target_id + ".png"
+                    self.image_root, target_id + f".{self.image_tag}"
                 )
 
                 pose_list = self.poses
@@ -432,7 +437,7 @@ class SelfKittiDatasetStage2(Dataset):
             bev_feat_list = []
             # large_feat_list = []
             rgb_path = os.path.join(
-                self.data_root, "image_2", frame_id + ".png"
+                self.image_root, frame_id + f".{self.image_tag}"
             )
             openset_feat_path = os.path.join(
                 self.data_root, "openset", "image_2", frame_id + ".pt"
@@ -441,8 +446,8 @@ class SelfKittiDatasetStage2(Dataset):
             
             # add lidar
             # lidar = 0
-            lidar_path = rgb_path.replace("image_2", "velodyne").replace(".png", ".bin")
-            label_path = rgb_path.replace("image_2", "labels").replace(".png", ".label")
+            lidar_path = rgb_path.replace("image_2", "velodyne").replace(f".{self.image_tag}", ".bin")
+            label_path = rgb_path.replace("image_2", "labels").replace(f".{self.image_tag}", ".label")
             
             img = Image.open(rgb_path).convert("RGB")
             # bev_feat = torch.load(bev_feat_path) # wen commend
@@ -495,7 +500,7 @@ class SelfKittiDatasetStage2(Dataset):
             for i in self.target_frames:
                 if len(self.target_frames) == 1:
                     rgb_path = os.path.join(
-                        self.data_root, "image_3", frame_id + ".png"
+                        self.data_root, "image_3", frame_id + f".{self.image_tag}"
                     )
                     openset_feat_path = os.path.join(
                         self.data_root, "openset", "image_3", frame_id + ".pt"
@@ -539,7 +544,7 @@ class SelfKittiDatasetStage2(Dataset):
                         target_id = str(id + i).zfill(6)
 
                     rgb_path = os.path.join(
-                        self.data_root, "image_2", target_id + ".png"
+                        self.image_root, target_id + f".{self.image_tag}"
                     )
                     openset_feat_path = os.path.join(
                         self.data_root, "openset", "image_2", target_id + ".pt"
@@ -588,7 +593,7 @@ class SelfKittiDatasetStage2(Dataset):
             image_list = []
 
             rgb_path = os.path.join(
-                self.data_root, "image_2", frame_id + ".png"
+                self.image_root, frame_id + f".{self.image_tag}"
             )
             img = Image.open(rgb_path).convert("RGB")
             # w, h = img.size
@@ -614,7 +619,7 @@ class SelfKittiDatasetStage2(Dataset):
             for i in self.target_frames:
                 if len(self.target_frames) == 1:
                     rgb_path = os.path.join(
-                        self.data_root, "image_3", frame_id + ".png"
+                        self.data_root, "image_3", frame_id + f".{self.image_tag}"
                     )
                     img = Image.open(rgb_path).convert("RGB")
                     # w, h = img.size
@@ -636,7 +641,7 @@ class SelfKittiDatasetStage2(Dataset):
                         target_id = str(id + i).zfill(6)
 
                     rgb_path = os.path.join(
-                        self.data_root, "image_2", target_id + ".png"
+                        self.image_root, target_id + f".{self.image_tag}"
                     )
                     img = Image.open(rgb_path).convert("RGB")
                     # w, h = img.size

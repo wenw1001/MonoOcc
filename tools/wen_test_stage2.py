@@ -21,6 +21,11 @@ python ./tools/wen_test_stage2.py \
     /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth \
     ./wen_data/wen_kitti/00
 
+python ./tools/wen_test_stage2.py \
+    ./projects/configs/MonoOcc/MonoOcc-S.py \
+    /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth \
+    ./wen_data/wen_kitti/itri_campus
+
 """
 
 import argparse
@@ -53,7 +58,7 @@ def parse_args():
     default_config = './projects/configs/MonoOcc/MonoOcc-S.py'
     # 你的 Checkpoint 路徑
     default_ckpt = '/home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth'
-    default_data_root = './wen_data/wen_kitti/07'
+    default_data_root = './wen_data/wen_kitti/00'
 
     # nargs='?' 代表如果指令沒給這個參數，就使用 default 值
     parser.add_argument('config', nargs='?', default=default_config, help='test config file path')
@@ -143,6 +148,8 @@ def main():
     dataset = SelfKittiDatasetStage2(
         data_root=args.data,
         semantickitti_yaml="/home/rvl/Desktop/wenwen/kitti/dataset/semantic-kitti.yaml",
+        image_filename="image",
+        image_tag="jpg",
         labels_filename="labels",
         query_filename="queries_2",
         query_tag="query"

@@ -408,7 +408,8 @@ class LMSCNet_SS(MVXTwoStageDetector):
         base_out_dir = os.path.dirname(img_filepath)
         print(f"影像路徑: {img_filepath}")
         print(f"query 儲存路徑根目錄: {base_out_dir}")
-        frame_id = os.path.splitext(img_path[0])[0][-6:] # 預設影像檔名格式為 000001.png，故取最後六個字元當作 frame_id
+        frame_id = os.path.basename(os.path.splitext(img_path[0])[0])
+        print(f"frame_id: {frame_id}")
 
         # msnet3d
         query_2_root = os.path.join(base_out_dir, 'queries_2')

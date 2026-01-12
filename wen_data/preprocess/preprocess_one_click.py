@@ -19,9 +19,9 @@ python /home/rvl/Desktop/wenwen/my_projects/MonoOcc/wen_data/preprocess/preproce
     --save-depth \
     --save-depth-vis \
     --save-lidar \
-    --manual-pitch -2.0 \
     --compress
-
+    
+    --manual-pitch -2.0 \
     --manual-height 3.0 # 設定了這個參數後，auto-scale 會被忽略
     --manual-yaw 5.0  <-- 新增：正值向左轉，負值向右轉
 

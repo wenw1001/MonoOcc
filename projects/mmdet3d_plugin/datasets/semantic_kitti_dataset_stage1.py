@@ -19,6 +19,17 @@ from mmdet.datasets import DATASETS
 from mmcv.parallel import DataContainer as DC
 from projects.mmdet3d_plugin.MonoOcc.utils.ssc_metric import SSCMetrics
 
+######## 傳進來的參數範例如下 ########
+    # test=dict(
+    #     type=dataset_type, # 'SemanticKittiDatasetStage1'
+    #     split = "val",
+    #     test_mode=True,
+    #     data_root=data_root, # './kitti/'
+    #     preprocess_root=data_root + 'dataset',
+    #     nsweep=_nsweep_, # _nsweep_ = 10,
+    #     depthmodel=_depthmodel_), # _depthmodel_ = "msnet3d",
+######################################
+
 @DATASETS.register_module()
 class SemanticKittiDatasetStage1(Dataset):
     def __init__(
@@ -36,7 +47,7 @@ class SemanticKittiDatasetStage1(Dataset):
         self.n_classes = 2
         splits = {
             "train": ["00", "01", "02", "03", "04", "05", "06", "07", "09", "10"],
-            "val": ["08"],
+            "val": ["00"], # 要推論的影像資料（因為QPN寫死推論資料類型為val）
             "test": ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"],
         }
 
@@ -189,6 +200,8 @@ class SemanticKittiDatasetStage1(Dataset):
 
         else:
             target = np.ones((128,128,16))
+            target_4 = np.ones((64,64,8))
+            target_8 = np.ones((32,32,4))
         targets = [target, target_4, target_8]
         meta_dict = dict(
             target=targets,

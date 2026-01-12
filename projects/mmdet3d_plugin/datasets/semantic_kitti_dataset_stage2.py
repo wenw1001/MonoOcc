@@ -397,17 +397,7 @@ class SemanticKittiDatasetStage2(Dataset):
                 cam_intrinsics.append(intrinsic)
                 image_paths.append(rgb_path)
 
-        proposal_bin = self.read_occupancy_SemKITTI(proposal_path) # wen commend
-        # if self.test_mode:
-        #     # 如果是測試模式，我們沒有 queries 檔案。
-        #     # 模型在推論時其實用不到這個 proposal 的內容，但程式流程上需要這個欄位。
-        #     # 所以我們創建一個和 config 檔 (128, 128, 16) 尺寸一致的假資料。
-        #     dummy_proposal = np.zeros((128, 128, 16), dtype=np.float32)
-        #     # 模型期望輸入的是一個 flattened array (一維陣列)
-        #     proposal_bin = dummy_proposal.reshape(-1)
-        # else:
-        #     # 如果是訓練模式，則維持原本的行為，去讀取真實的 proposal 檔案。
-        #     proposal_bin = self.read_occupancy_SemKITTI(proposal_path)
+        proposal_bin = self.read_occupancy_SemKITTI(proposal_path)
 
         meta_dict = dict(
             sequence_id = sequence,

@@ -1,7 +1,7 @@
 _gamma_=0
 _alpha_=0.54
-_nsweep_=10
-_depthmodel_ = "msnet3d"
+_nsweep_=10 # 用不到，只是msnet3d輸出資料夾名稱的字串
+_depthmodel_ = "msnet3d" # 用不到，只是msnet3d輸出資料夾名稱的字串
 
 _base_ = [
     '../_base_/default_runtime.py'

@@ -21,6 +21,21 @@ from mmdet.datasets import DATASETS
 from mmcv.parallel import DataContainer as DC
 from projects.mmdet3d_plugin.MonoOcc.utils.ssc_metric import SSCMetrics
 
+######## 傳進來的參數範例如下 ########
+#    test=dict(
+#        type=dataset_type, # 'SemanticKittiDatasetStage2'
+#        split = "test",
+#        test_mode=True,
+#        data_root=data_root, # './kitti/'
+#        preprocess_root=data_root + 'dataset',
+#        eval_range = 51.2,
+#        depthmodel=_depthmodel_, # _depthmodel_ = "msnet3d",
+#        nsweep=_nsweep_, # _nsweep_ = 10, 
+#        temporal = _temporal_, #  _temporal_ = [],
+#        labels_tag = _labels_tag_, # _labels_tag_ = 'labels',
+#        query_tag = _query_tag_), # _query_tag_ = 'query'
+######################################
+
 @DATASETS.register_module()
 class SemanticKittiDatasetStage2(Dataset):
     def __init__(
@@ -189,8 +204,9 @@ class SemanticKittiDatasetStage2(Dataset):
                 
                 
             glob_path = os.path.join(
-                self.data_root, "dataset", "sequences_" + self.depthmodel + "_sweep"+ self.nsweep, sequence, "queries", "*." + self.query_tag
+                self.data_root, "dataset", "sequences_" + self.depthmodel + "_sweep"+ self.nsweep, sequence, "queries_2", "*." + self.query_tag
             )
+            print(f"載入序列 {sequence} 的掃描檔案，路徑模式：{glob_path}")
 
             for proposal_path in glob.glob(glob_path):
             
@@ -381,7 +397,17 @@ class SemanticKittiDatasetStage2(Dataset):
                 cam_intrinsics.append(intrinsic)
                 image_paths.append(rgb_path)
 
-        proposal_bin = self.read_occupancy_SemKITTI(proposal_path)
+        proposal_bin = self.read_occupancy_SemKITTI(proposal_path) # wen commend
+        # if self.test_mode:
+        #     # 如果是測試模式，我們沒有 queries 檔案。
+        #     # 模型在推論時其實用不到這個 proposal 的內容，但程式流程上需要這個欄位。
+        #     # 所以我們創建一個和 config 檔 (128, 128, 16) 尺寸一致的假資料。
+        #     dummy_proposal = np.zeros((128, 128, 16), dtype=np.float32)
+        #     # 模型期望輸入的是一個 flattened array (一維陣列)
+        #     proposal_bin = dummy_proposal.reshape(-1)
+        # else:
+        #     # 如果是訓練模式，則維持原本的行為，去讀取真實的 proposal 檔案。
+        #     proposal_bin = self.read_occupancy_SemKITTI(proposal_path)
 
         meta_dict = dict(
             sequence_id = sequence,
@@ -425,15 +451,15 @@ class SemanticKittiDatasetStage2(Dataset):
             # 15.53
             # epoch 16: 15.03
             # epoch 11: 15.69
-            bev_feat_path = os.path.join(
-                "/home/aidrive/zyp/Surround_scene/bev_feat", "sequences", sequence, "bev_feat_15.02", frame_id + ".pt"
-            )
+            # bev_feat_path = os.path.join(
+            #     "/home/aidrive/zyp/Surround_scene/bev_feat", "sequences", sequence, "bev_feat_15.02", frame_id + ".pt"
+            # ) # wen commend
             # bev_feat_path = os.path.join(
             #     self.data_root, "dataset", "sequences", sequence, "bev_feat", frame_id + ".pt"
             # )
-            sem_path = os.path.join(
-                "/home/aidrive/zyp/Surround_scene/sem", "sequences", sequence, frame_id + ".npy"
-            )
+            # sem_path = os.path.join(
+            #     "/home/aidrive/zyp/Surround_scene/sem", "sequences", sequence, frame_id + ".npy"
+            # ) # wen commend
             # sem_path = rgb_path.replace("image_2", "sem_gt")
             # depth_path = os.path.join(
             #     "/home/aidrive/zyp/Surround_scene/depth", "sequences", sequence, frame_id + ".npy"
@@ -449,7 +475,8 @@ class SemanticKittiDatasetStage2(Dataset):
             label_path = rgb_path.replace("image_2", "labels").replace(".png", ".label")
             
             img = Image.open(rgb_path).convert("RGB")
-            bev_feat = torch.load(bev_feat_path)
+            # bev_feat = torch.load(bev_feat_path) # wen commend
+            bev_feat = torch.zeros((1, 1)) # wen add
             # large_feat = torch.load(large_feat_path)
             # bev_feat = torch.zeros((1,1))
             # openset_feat = torch.load(openset_feat_path).type(torch.float32)
@@ -463,7 +490,8 @@ class SemanticKittiDatasetStage2(Dataset):
 
             #     scal_x = self.img_W / w
             #     scal_y = self.img_H / h
-            sem = np.load(sem_path)
+            # sem = np.load(sem_path) # wen commend
+            sem = np.zeros((370, 1220)) # wen add
             # sem = Image.open(sem_path)
             # sem = np.array(sem)
             # depth = np.load(depth_path)
@@ -503,9 +531,10 @@ class SemanticKittiDatasetStage2(Dataset):
                         self.data_root, "dataset", "sequences", sequence, "openset", "image_3", frame_id + ".pt"
                     )
                     openset_feat = torch.load(openset_feat_path).type(torch.float32)
-                    sem_path = os.path.join(
-                        "/home/aidrive/zyp/Surround_scene/sem", "sequences", sequence, frame_id + ".npy"
-                    )
+                    # sem_path = os.path.join(
+                    #     "/home/aidrive/zyp/Surround_scene/sem", "sequences", sequence, frame_id + ".npy"
+                    # ) # wen commend
+                    sem_path = "" # wen add (其實這行不重要，但保留)
                     # sem_path = rgb_path.replace("image_3", "sem_gt_3")
                     # depth_path = os.path.join(
                     #     "/DATA_EDS/zyp/Surround_scene/depth", "sequences", sequence, frame_id + ".npy"
@@ -514,7 +543,8 @@ class SemanticKittiDatasetStage2(Dataset):
                     # if img.size[0] == 1226:
                     #     img = img.resize((self.img_W, self.img_H), Image.BICUBIC)
                     #     sem = sem.resize((self.img_W, self.img_H), Image.NEAREST)
-                    sem = np.load(sem_path)
+                    # sem = np.load(sem_path) # wen commend
+                    sem = np.zeros((370, 1220)) # wen add
                     # sem = Image.open(sem_path)
                     # sem = np.array(sem)
                     # depth = np.load(depth_path)
@@ -546,9 +576,10 @@ class SemanticKittiDatasetStage2(Dataset):
                     # openset_feat = torch.load(openset_feat_path).type(torch.float32)
                     openset_feat = torch.zeros((1,1))
                     # bev_feat = torch.zeros((1,1))
-                    sem_path = os.path.join(
-                        "/home/aidrive/zyp/Surround_scene/sem", "sequences", sequence, frame_id + ".npy"
-                    )
+                    # sem_path = os.path.join(
+                    #     "/home/aidrive/zyp/Surround_scene/sem", "sequences", sequence, frame_id + ".npy"
+                    # ) # wen commend
+                    sem_path = "" # wen add
                     # sem_path = rgb_path.replace("image_2", "sem_gt")
                     # depth_path = os.path.join(
                     #     "/DATA_EDS/zyp/Surround_scene/depth", "sequences", sequence, target_id + ".npy"
@@ -558,7 +589,8 @@ class SemanticKittiDatasetStage2(Dataset):
                     # if w != 1241:
                     #     img = img.resize((self.img_W, self.img_H), Image.BICUBIC)
                     #     sem = sem.resize((self.img_W, self.img_H), Image.NEAREST)
-                    sem = np.load(sem_path)
+                    # sem = np.load(sem_path) # wen commend
+                    sem = np.zeros((370, 1220)) # wen add
                     # sem = Image.open(sem_path)
                     # sem = np.array(sem)
                     # depth = np.load(depth_path)

@@ -1,6 +1,6 @@
 """
 使用方式：
-python ./tools/wen_eval.py ./projects/configs/MonoOcc/MonoOcc-S.py result/MonoOcc-S/
+python ./tools/wen_eval.py ./projects/configs/MonoOcc/MonoOcc-S.py result/MonoOcc-S/某次訓練的資料夾
 """
 import argparse
 import mmcv

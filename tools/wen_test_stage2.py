@@ -126,10 +126,10 @@ def main():
         torch.backends.cudnn.benchmark = True
 
     print("配置檔案載入完成。")
-    print("cfg 設定內容:")
-    time.sleep(1)  
-    print(cfg.pretty_text)
-    time.sleep(1)  
+    # print("cfg 設定內容:")
+    # time.sleep(1)  
+    # print(cfg.pretty_text)
+    # time.sleep(1)  
 
     # 2. 環境初始化
     samples_per_gpu = cfg.data.test.pop('samples_per_gpu', 1)
@@ -148,8 +148,8 @@ def main():
     dataset = SelfKittiDatasetStage2(
         data_root=args.data,
         semantickitti_yaml="/home/rvl/Desktop/wenwen/kitti/dataset/semantic-kitti.yaml",
-        image_filename="image",
-        image_tag="jpg",
+        image_filename="image_2",
+        image_tag="png",
         labels_filename="labels",
         query_filename="queries_2",
         query_tag="query"
@@ -219,8 +219,8 @@ def main():
     )
     start_time = time.time()
     print(f"開始多重 GPU 推論..., 開始時間: {time.ctime()}")
-    outputs = custom_multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
-    print(f"\n多重 GPU 推論完成。共有 {len(outputs)} 筆輸出結果。費時: {time.time() - start_time} 秒。結束時間: {time.ctime()}")
+    outputs, count = custom_multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
+    print(f"\n多重 GPU 推論完成。共有 {count} 筆輸出結果。費時: {time.time() - start_time} 秒。結束時間: {time.ctime()}")
 
 
 if __name__ == '__main__':

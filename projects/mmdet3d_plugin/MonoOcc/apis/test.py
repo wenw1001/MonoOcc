@@ -31,8 +31,10 @@ import mmcv
 import numpy as np
 import pycocotools.mask as mask_util
 
-save_path = '/home/aidrive/zyp/Surround_scene/fisherocc/result/MonoOcc-demo-12.35'
-voxel_path = '/home/aidrive/zyp/Surround_scene/fisherocc/kitti/dataset'
+# save_path = '/home/aidrive/zyp/Surround_scene/fisherocc/result/MonoOcc-demo-12.35'
+# voxel_path = '/home/aidrive/zyp/Surround_scene/fisherocc/kitti/dataset'
+save_path = './result/Wen'  # wen add, 將結果儲存在專案根目錄下的 'result' 資料夾
+voxel_path = './kitti/dataset' # wen add, 根據你的 config，這應該是你的 kitti 資料路徑
 
 # inverse of previous map
 remapdict = {
@@ -118,6 +120,9 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
 
     model.eval()
     results = []
+    count = 0 # 用於計算 result 數量
+    if not gpu_collect:
+        print(f"沒有使用gpu收集，將不會進行結果合併。")
 
     dataset = data_loader.dataset
     rank, world_size = get_dist_info()
@@ -127,17 +132,35 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
     # have_mask = False
     for i, data in enumerate(data_loader):
         with torch.no_grad():
+            # print(f"GPU {rank} 處理第 {i+1} 批次資料，共 {len(data_loader)} 批次...")           
+            # print(f"資料內容 data: {data}")
+            # print(f"-------------- data items --------------")
+            # print(f"資料內容 keys: {data.keys()}")
+            # target_data = data['img_metas'].data[0][0][0]
+            # print(f"影像資訊(img_metas) keys: {target_data.keys()}")
+            # print(f"影像路徑 img_filename: {target_data['img_filename']}")
+            # print("--------------------------")
             result = model(return_loss=False, rescale=True, **data)
+            if gpu_collect:
+                results.append(result) #　回傳整個 dataset 推論結果時，使用
+            else:
+                count += 1
+            
 
             # print(result)
             # encode mask results
+            # print(f"GPU {rank} 完成第 {i+1} 批次資料的推論。")
+            # print(f"結果內容 result: {result}")
+            # print(f"-------------- result items --------------")
             if isinstance(result, dict):
                 # if 'y_pred' in result.keys():
                 # y_pred = result['y_pred']
                 batch_size = len(result['y_pred'])
                 # y_preds.extend(y_pred)
 
-                if dataset.split == "test":
+                # print(f"dataset.split: {dataset.split}")
+                # print(f"目前的dataset type: {dataset.dataset_type}")
+                if dataset.split == "test" and dataset.dataset_type == "SelfKittiDatasetStage2": # 做 stage2 test 時使用，儲存預測結果為 .label 檔案。 stage1 於 ./projects/mmdet3d_plugin/MonoOcc/detectors/lmscnet.py 儲存 .query 檔案，故無須在此重複儲存。
                     # img_filename = result['img_filename']
                     # img_path = img_filename.replace("./kitti/dataset", save_path).replace("/image_2", "/predictions").replace(".png", ".label")
                     # prediction = result['y_pred']
@@ -155,13 +178,23 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
 
                     # for validation, generate both the occupancy & input image for visualization
                     prediction = result['y_pred']
+
+                    # ============= Print Debug Info =============
+                    # print("模型輸出 prediction:", prediction)
+                    # print(f"\n  prediction 類別 最大值: {np.max(prediction)}, 最小值: {np.min(prediction)}")
+                    # if np.any(prediction > 0):
+                    #     print(f"  [成功] 找到非零體素！（此張影像 共 {len(np.unique(prediction))} 種類別）")
+                    # ============================================
+
                     output_voxels = prediction.reshape(-1)
                     output_voxels = output_voxels.astype(np.uint8)
 
                     img_filename = result['img_filename']
+                    # print(f"img_filename: {img_filename}")
                     raw_img = np.array(Image.open(img_filename))
 
                     img_path = img_filename.replace("./kitti/dataset", save_path).replace("/image_2", "/predictions").replace(".png", ".pkl")
+                    img_path = img_path.replace("/image", "/predictions").replace(".jpg", ".pkl")
 
                     out_dict = dict(
                         output_voxel=output_voxels,
@@ -173,6 +206,7 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
                     
                     with open(img_path, "wb") as handle:
                         pickle.dump(out_dict, handle)
+                        print(f"已寫入檔案: {img_path}")
                         # print("wrote to", img_path)
                 
                 # if dataset.split == "val":
@@ -200,7 +234,6 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
 
                 # y_true = result['y_true']
                 # batch_size = len(result['y_true'])
-                results.append(result)
                 # if 'mask_results' in result.keys() and result['mask_results'] is not None:
                 #     mask_result = custom_encode_mask_results(result['mask_results'])
                 #     mask_results.extend(mask_result)
@@ -225,7 +258,8 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
         # else:
         #     mask_results = None
     else:
-        results = collect_results_cpu(results, len(dataset), tmpdir)
+        # results = collect_results_cpu(results, len(dataset), tmpdir)
+        return results, count
         # tmpdir = tmpdir+'_mask' if tmpdir is not None else None
         # if have_mask:
         #     mask_results = collect_results_cpu(mask_results, len(dataset), tmpdir)
@@ -233,7 +267,7 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
         #     mask_results = None
 
     # if mask_results is None:
-    return results
+    return results, count
     # return {'bbox_results': bbox_results, 'mask_results': mask_results}
 
 

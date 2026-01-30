@@ -23,6 +23,15 @@ python ./tools/wen_test_stage1.py \
     /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/qpn_mIoU_6140_epoch_12.pth \
     ./wen_data/wen_kitti/00
 
+python ./tools/wen_test_stage1.py \
+    ./projects/configs/MonoOcc/qpn.py \
+    /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/qpn_mIoU_6140_epoch_12.pth \
+    ./wen_data/wen_kitti/itri_campus_test
+python ./tools/wen_test_stage2.py \
+    ./projects/configs/MonoOcc/MonoOcc-S.py \
+    /home/rvl/Desktop/wenwen/my_projects/MonoOcc/ckpts/MonoOcc-S.pth \
+    ./wen_data/wen_kitti/itri_campus_test
+
 """
 
 import argparse
@@ -92,7 +101,7 @@ def main():
     print('-----------------')
     print('1. 參數設定:')
     args = parse_args()
-    print(args)
+    # print(args)
 
     print('-----------------')
     print('2. 載入配置檔案...')
@@ -123,10 +132,10 @@ def main():
         torch.backends.cudnn.benchmark = True
 
     print("配置檔案載入完成。")
-    print("cfg 設定內容:")
-    time.sleep(1)  
-    print(cfg.pretty_text)
-    time.sleep(1)  
+    # print("cfg 設定內容:")
+    # time.sleep(1)  
+    # print(cfg.pretty_text)
+    # time.sleep(1)  
 
     # 2. 環境初始化
     samples_per_gpu = cfg.data.test.pop('samples_per_gpu', 1)
@@ -142,7 +151,7 @@ def main():
     # 3. 建立 Dataset (直接使用指定的 Class)
     print('-----------------')
     print("3. 從 SimpleKittiDataset 建立資料集物件...")
-    dataset = SelfKittiDatasetStage1(data_root=args.data, split='test', voxel_filename='pseudo_packed_scale105_Tr')
+    dataset = SelfKittiDatasetStage1(data_root=args.data, split='test', voxel_filename='pseudo_packed')
     print("dataset 物件建立完成，包含 %d 筆資料。" % len(dataset))
     time.sleep(1)  # for better print output
 
@@ -208,8 +217,8 @@ def main():
     )
     start_time = time.time()
     print(f"開始多重 GPU 推論..., 開始時間: {time.ctime()}")
-    outputs = custom_multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
-    print(f"\n多重 GPU 推論完成。共有 {len(outputs)} 筆輸出結果。費時: {time.time() - start_time} 秒。結束時間: {time.ctime()}")
+    outputs, count = custom_multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
+    print(f"\n多重 GPU 推論完成。共有 {count} 筆輸出結果。費時: {time.time() - start_time} 秒。結束時間: {time.ctime()}")
 
 
 if __name__ == '__main__':

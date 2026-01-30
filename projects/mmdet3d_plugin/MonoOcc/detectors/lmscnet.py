@@ -397,7 +397,7 @@ class LMSCNet_SS(MVXTwoStageDetector):
         if self.uncertain:
           pred_sigma = y_pred[:,2,:,:,:]
           y_pred = y_pred[:,0:2,:,:,:]
-          print(pred_sigma.nonzero()[0].shape[0])
+          # print(pred_sigma.nonzero()[0].shape[0])
         y_pred_1 = np.argmax(y_pred_1, axis=1).astype(np.uint8) # [1, 128, 128, 16]
         y_pred_2 = np.argmax(y_pred_2, axis=1).astype(np.uint8) # [1, 128, 128, 16]
         y_pred_3 = np.argmax(y_pred_3, axis=1).astype(np.uint8) # [1, 128, 128, 16]
@@ -409,7 +409,7 @@ class LMSCNet_SS(MVXTwoStageDetector):
         print(f"影像路徑: {img_filepath}")
         print(f"query 儲存路徑根目錄: {base_out_dir}")
         frame_id = os.path.basename(os.path.splitext(img_path[0])[0])
-        print(f"frame_id: {frame_id}")
+        # print(f"frame_id: {frame_id}")
 
         # msnet3d
         query_2_root = os.path.join(base_out_dir, 'queries_2')
@@ -449,17 +449,17 @@ class LMSCNet_SS(MVXTwoStageDetector):
         # else:
         save_query_path_2 = os.path.join(query_2_root, frame_id + ".query")
         y_pred_bin_2 = self.pack(y_pred_1)
-        print(save_query_path_2, y_pred_bin_2.shape)
+        # print(save_query_path_2, y_pred_bin_2.shape)
         y_pred_bin_2.tofile(save_query_path_2)
 
         save_query_path_4 = os.path.join(query_4_root, frame_id + ".query")
         y_pred_bin_4 = self.pack(y_pred_2)
-        print(save_query_path_4, y_pred_bin_4.shape)
+        # print(save_query_path_4, y_pred_bin_4.shape)
         y_pred_bin_4.tofile(save_query_path_4)
         
         save_query_path_8 = os.path.join(query_8_root, frame_id + ".query")
         y_pred_bin_8 = self.pack(y_pred_3)
-        print(save_query_path_8, y_pred_bin_8.shape)
+        # print(save_query_path_8, y_pred_bin_8.shape)
         y_pred_bin_8.tofile(save_query_path_8)
         #-------------------------------------------------------------------------------------------------
         # print(img_metas[0]['sequence_id'])

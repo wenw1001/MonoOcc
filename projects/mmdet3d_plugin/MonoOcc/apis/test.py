@@ -122,7 +122,7 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
     results = []
     count = 0 # 用於計算 result 數量
     if not gpu_collect:
-        print(f"沒有使用gpu收集，將不會進行結果合併。")
+        print(f"沒有使用gpu收集，將不會進行結果合併。（請確認僅使用 1 個 GPU，多 GPU 測試請使用 --gpu-collect）")
 
     dataset = data_loader.dataset
     rank, world_size = get_dist_info()
@@ -258,8 +258,8 @@ def custom_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
         # else:
         #     mask_results = None
     else:
-        # results = collect_results_cpu(results, len(dataset), tmpdir)
-        return results, count
+        # results = collect_results_cpu(results, len(dataset), tmpdir) ＃ 用 CPU 收集結果，但速度會變慢。（這裡註解掉是因為會OOM，不需要存這個，故註解掉。）
+        return results, count # 因為上面的註解掉了，補一行return
         # tmpdir = tmpdir+'_mask' if tmpdir is not None else None
         # if have_mask:
         #     mask_results = collect_results_cpu(mask_results, len(dataset), tmpdir)
